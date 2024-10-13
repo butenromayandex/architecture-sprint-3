@@ -1,0 +1,35 @@
+@startuml
+title SmartHome Telemetry Processing Component Diagram
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/butenromayandex/C4/main/C4_Component.puml
+
+!define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
+!include DEVICONS/postgresql.puml
+!include DEVICONS/java.puml
+
+System_Boundary(SmartHome, "SmartHome System") {
+  Container(telemetry, "Telemetry Processing Service", "Java, Spring")
+  ContainerDb(db, "Database", "Postgres", "Хранение данных", $sprite="postgresql")
+  ContainerQueue(kafka, "Message Broker", "Kafka")
+}
+Container(telemetry, "Java, Spring") {
+  Component(TelemetryProcess, "TelemetryProcess", )
+  Component(TelemetryController, "TelemetryController", "", "Обработка телеметрии")
+  Component(TelemetryProducer, "TelemetryProducer", "", "Публикация данных телеметрии")
+  Component(TelemetryService, "TelemetryService", "", "Бизнес логика")
+  Component(TelemetryRepository, "TelemetryRepository")
+}
+
+System_Ext(sensors, "Внешние модули/устройства, датчики. Принимают REST команды")
+
+Rel(TelemetryProcess, sensors, "Получение данных датчиков / сенсоров", "REST")
+Rel(TelemetryProcess, TelemetryController, "Передача данных телеметрии")
+Rel(TelemetryController, TelemetryService, "-")
+Rel(TelemetryService, TelemetryRepository, "Передача подготовленных данных телеметрии")
+
+TelemetryProducer --> kafka : "Публикация актуальных данных"
+TelemetryService --> TelemetryProducer : "Передача данных телеметрии"
+TelemetryRepository --> db : "Сохранение данных телеметрии"
+@enduml

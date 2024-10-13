@@ -1,0 +1,29 @@
+@startuml
+title SmartHome Monitoring Processing Component Diagram
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/butenromayandex/C4/main/C4_Component.puml
+
+!define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
+!include DEVICONS/postgresql.puml
+!include DEVICONS/java.puml
+
+System_Boundary(SmartHome, "SmartHome System") {
+  Container(monitoring, "Monitoring Service", "Java, Spring")
+
+  ContainerQueue(kafka, "Message Broker", "Kafka")
+  Component(gateway, "API Gateway", "Валидация, аутентификация, авторизация и маршрутизация HTTP запросов")
+}
+Container(monitoring, "Java, Spring") {
+  Component(MonitoringController, "MonitoringController")
+  Component(MonitoringConsumer, "MonitoringConsumer")
+}
+
+Rel(gateway, MonitoringController, "Запрос актуальных данных", "REST")
+Rel(MonitoringController, gateway, "Передача актуальных данных")
+Rel(MonitoringController, MonitoringConsumer, "Запрос актуальных данных")
+Rel(MonitoringConsumer, MonitoringController, "Передача актуальных данных")
+
+Rel(MonitoringConsumer, kafka, "Запрос актуальных данных")
+@enduml

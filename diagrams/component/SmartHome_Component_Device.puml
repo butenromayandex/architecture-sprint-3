@@ -1,0 +1,84 @@
+@startuml
+title SmartHome Device Component Diagram
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/butenromayandex/C4/main/C4_Component.puml
+
+!define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
+!include DEVICONS/postgresql.puml
+!include DEVICONS/java.puml
+
+System_Boundary(SmartHome, "SmartHome System") {
+  Container(device, "Device Control Service", "Java, Spring", "Управление устройствами", $sprite="java")
+  ContainerDb(db, "Database", "Postgres", "Хранение данных", $sprite="postgresql")
+  ContainerQueue(kafka, "Message Broker", "Kafka")
+  Component(gateway, "API Gateway", "Валидация, аутентификация, авторизация и маршрутизация HTTP запросов")
+}
+
+Container(device, "Java, Spring") {
+  Component(ScheduleConsumer, "ScheduleConsumer", "Получение данных для управлению устройствами, которые производит Schedule Daemon Service")
+  Component(TelemetryConsumer, "TelemetryConsumer", "Получение данных телеметрии")
+
+  Component(HeatingSystemController, "HeatingSystemController", "Управление отоплением")
+  Component(LightingSystemController, "LightingSystemController", "Управление освещением")
+  Component(VideoSystemController, "VideoSystemController", "Управление видеонаблюдением")
+  Component(GateSystemController, "GateSystemController", "Управление видеонаблюдением")
+  Component(DeviceController, "DeviceController", "управление внешними датчиками")
+
+  Component(HeatingSystemService, "HeatingSystemService", "Бизнес логика по управлению отоплением")
+  Component(LightingSystemService, "LightingSystemService", "Бизнес логика по управлению отоплением освещением")
+  Component(VideoSystemService, "VideoSystemService", "Бизнес логика по управлению отоплением видеонаблюдением")
+  Component(GateSystemService, "GateSystemService", "Бизнес логика по управлению отоплением видеонаблюдением")
+  
+  Component(HeatingSystemRepository, "HeatingSystemRepository", "Логика доступа к данным")
+  Component(LightingSystemRepository, "LightingSystemRepository", "Логика доступа к данным")
+  Component(VideoSystemRepository, "VideoSystemRepository", "Логика доступа к данным")
+  Component(GateSystemRepository, "GateSystemRepository", "Логика доступа к данным")
+
+}
+  System_Ext(sensors, "Внешние модули/устройства, датчики. Принимают REST команды")
+
+Rel(gateway, HeatingSystemController, "Отправка команд, CRUD", "REST")
+Rel(gateway, LightingSystemController, "Отправка команд, CRUD", "REST")
+Rel(gateway, VideoSystemController, "Отправка команд, CRUD", "REST")
+Rel(gateway, GateSystemController, "Отправка команд, CRUD", "REST")
+
+Rel(ScheduleConsumer, HeatingSystemService, "Отправляет команды")
+Rel(ScheduleConsumer, LightingSystemService, "Отправляет команды")
+Rel(ScheduleConsumer, VideoSystemService, "Отправляет команды")
+Rel(ScheduleConsumer, GateSystemService, "Отправляет команды")
+
+Rel(TelemetryConsumer, HeatingSystemService, "Отправляет команды")
+Rel(TelemetryConsumer, LightingSystemService, "Отправляет команды")
+Rel(TelemetryConsumer, VideoSystemService, "Отправляет команды")
+Rel(TelemetryConsumer, GateSystemService, "Отправляет команды")
+
+
+HeatingSystemController --> HeatingSystemService : "....."
+LightingSystemController --> LightingSystemService : "....."
+VideoSystemController --> VideoSystemService : "....."
+GateSystemController --> GateSystemService : "....."
+
+HeatingSystemService --> HeatingSystemRepository : "....."
+LightingSystemService --> LightingSystemRepository : "....."
+VideoSystemService --> VideoSystemRepository : "....."
+GateSystemService --> GateSystemRepository : "....."
+
+HeatingSystemService --> DeviceController : "Отправка команды контроллеру управления внешними датчиками / сенсорами"
+LightingSystemService --> DeviceController : "Отправка команды контроллеру управления внешними датчиками / сенсорами"
+VideoSystemService --> DeviceController : "Отправка команды контроллеру управления внешними датчиками / сенсорами"
+GateSystemService --> DeviceController : "Отправка команды контроллеру управления внешними датчиками / сенсорами"
+
+HeatingSystemRepository --> db: "Сохранение данных"
+LightingSystemRepository --> db: "Сохранение данных"
+VideoSystemRepository --> db: "Сохранение данных"
+GateSystemRepository --> db: "Сохранение данных"
+
+Rel(ScheduleConsumer, kafka, "Получение данных телеметрии")
+Rel(TelemetryConsumer, kafka, "Получение данных телеметрии")
+
+
+DeviceController --> sensors : "Отправляет команды на вкл/откл устройств"
+
+@enduml

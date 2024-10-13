@@ -1,0 +1,61 @@
+@startuml
+title SmartHome System Container Diagram
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/butenromayandex/C4/main/C4_Component.puml
+
+!define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
+!define FONTAWESOME https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/font-awesome-5
+!include FONTAWESOME/users.puml
+!include DEVICONS/postgresql.puml
+!include DEVICONS/java.puml
+
+
+Person(user, "Пользователи", "Пользователи системы  SmartHome", $sprite="users")
+Person(admin, "Администраторы", "Администраторы системы  SmartHome", $sprite="users")
+
+System_Boundary(smarthome, "SmartHome System") {
+  Container(device, "Device Control Service", "Java + Spring", "Управление устройствами", $sprite="java")
+  Container(telemetry, "Telemetry Processing Service", "Java + Spring", "Постоянно опрашивает датчики, сохраняет информацию в БД и публикует актуальные данные в шину", $sprite="java")
+  Container(schedule, "Schedule Service", "Java + Spring", "Управляет расписанием вкл/откл устройств, публикует команды на включение / отключение устройств", $sprite="java")
+  Container(monitoring, "Monitoring Service", "Java + Spring", "Предоставляет пользователям актуальные данные датчиков / сенсоров", $sprite="java")
+  Container(users, "User Service", "Java + Spring", "Управление пользователями", $sprite="java")
+
+  ContainerQueue(kafka, "Message Broker", "Kafka")
+  Container(gateway, "Api Gateway", "Kusk", "Валидация, аутентификация, авторизация и маршрутизация HTTP запросов")
+  ContainerDb(db, "Database", "Postgres", "Хранение данных", $sprite="postgresql")
+
+}
+
+System_Ext(sensors, "Внешние модули/устройства, датчики. Принимают REST команды")
+
+
+Rel(user, gateway, "Управляют устройствами")
+Rel(user, gateway, "Получают актуальные данные датчиков")
+
+Rel(admin, gateway, "Управление пользователями")
+
+Rel(gateway, device, "Управление устройствами, CRUD", "REST")
+Rel(gateway, schedule, "Управление сценариями, CRUD", "REST")
+
+Rel(gateway, monitoring, "Мониторинг устройств / модулей, просмотр актуальных данных", "REST")
+Rel(gateway, users, "Управление пользователями, CRUD", "REST")
+
+Rel(telemetry, sensors, "Сбор данных телеметрии", "REST")
+Rel(telemetry, kafka, "Публикация актуальных данных телеметрии")
+Rel(telemetry, db, "Сохранение данных телеметрии")
+
+
+Rel(device, kafka, "Получает команды из сценариев пользователей")
+Rel(device, kafka, "Получает телеметрию. На основании данных может вкл/откл устройства исходя из заданных параметров для устройств (Макс. темп. и т.д.)")
+Rel(device, sensors, "Управление модулями устройств", "REST")
+Rel(device, db, "Получение / сохранение настроек для устройств")
+
+Rel(schedule, kafka, "Публикация команд на вкл/откл устройств заданных в сценариях")
+Rel(schedule, db, "Чтение / запись сценариев")
+
+Rel(monitoring, kafka, "Получение актуальных данных телеметрии")
+
+Rel(users, db, "Сохранение данных пользователей")
+@enduml

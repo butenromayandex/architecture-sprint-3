@@ -1,0 +1,83 @@
+@startuml
+
+entity user {
+  *id: bigint(20)
+  --
+  name: varchar(40)
+  street: varchar(100)
+  is_active: tinyint(1)
+  created_date: datetime
+}
+
+entity city {
+  *id: bigint(20)
+  --
+  name: varchar(50)
+}
+
+entity house {
+  *id: bigint(20)
+  --
+  city_id: bigint(20) <<FK>>
+  user_id: bigint(20) <<FK>>
+  street: varchar(100)
+  house_num: int(3)
+  is_active: tinyint(1)
+}
+
+entity device {
+  *id: int(10)
+  --
+  device_type_id: int(10) <<FK>>
+  house_id: int(10) <<FK>>
+  serial: varchar(255)
+  status: tinyint(1)
+}
+
+entity device_type {
+  *id: int(10)
+  --
+  name: varchar(100)
+}
+
+entity module {
+  *id: int(10)
+  --
+  name: varchar(40)
+  house_id: int(10)
+  serial: varchar(255)
+  status: tinyint(1)
+}
+
+entity telemetry_data {
+  *id: bigint(20)
+  --
+  device_id: int(10) <<FK>>
+  data: text
+  created_date: datetime
+}
+
+entity schedule {
+  id: bigint(20)
+  --
+  name: varchar(100)
+  device_id: bigint(20)
+  starts: datetime
+  ends: datetime
+  weekdays: tinyint(1)
+  weekends: tinyint(1)
+  data: text
+  created_date: datetime
+}
+
+
+house }--|| city
+user ||--{ house
+device ||--|| device_type
+device }--|| house
+device ||--{ telemetry_data
+
+module }--|| house
+module ||--{ device
+schedule ||--|| device
+@enduml

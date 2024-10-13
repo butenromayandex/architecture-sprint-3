@@ -1,0 +1,39 @@
+@startuml
+title SmartHome Schedule Component Diagram
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/butenromayandex/C4/main/C4_Component.puml
+
+!define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
+!include DEVICONS/postgresql.puml
+!include DEVICONS/java.puml
+
+System_Boundary(SmartHome, "SmartHome System") {
+  Container(schedule, "Schedule Service", "Java, Spring")
+
+  ContainerDb(db, "Database", "Postgres", "Хранение данных", $sprite="postgresql")
+  ContainerQueue(kafka, "Message Broker", "Kafka")
+  Component(gateway, "API Gateway", "Валидация, аутентификация, авторизация и маршрутизация HTTP запросов")
+}
+Container(schedule, "Java, Spring") {
+  Component(ScheduleBroker, "ScheduleBroker")
+  Component(ScheduleController, "ScheduleController", "", "Обработка запросов CRUD")
+  Component(ScheduleService, "ScheduleService", "", "Бизнес логика")
+  Component(ScheduleProcess, "ScheduleProcess", "", "Процесс обработки сценариев. Вычисляет, какие устройства нужно включить / отключить")
+  Component(ScheduleRepository, "ScheduleRepository")
+}
+
+Rel(gateway, ScheduleController, "Управление сценариями пользователей CRUD", "REST")
+
+ScheduleController --> ScheduleService
+ScheduleService --> ScheduleRepository
+ScheduleRepository --> db : "Сохранение данных"
+ScheduleProcess <-- db : "Получение сценариев"
+ScheduleProcess --> ScheduleService : "Публикация команд"
+
+ScheduleService --> ScheduleBroker
+
+ScheduleBroker --> kafka : "Публикация команд"
+
+@enduml
