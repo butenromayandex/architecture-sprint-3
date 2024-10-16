@@ -1,0 +1,26 @@
+@startuml
+
+title SmartHome System Context Diagram
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/butenromayandex/C4/main/C4_Component.puml
+
+!define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
+!define FONTAWESOME https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/font-awesome-5
+!include DEVICONS/java.puml
+!include FONTAWESOME/users.puml
+
+Person(user, "Пользователи", "Пользователи системы  SmartHome", $sprite="users")
+Person(admin, "Администраторы", "Администраторы системы  SmartHome", $sprite="users")
+
+System(SmartHomeSystem, "SmartHome System", "Управление отоплением в домах пользователей, мониторинг температуры, поддержание заданной температуры", $sprite="java")
+System_Ext(sensors, "Внешние модули/устройства")
+System_Ext(apps, "Web apps (spa), разрабатываются на аутсорсе")
+
+Rel(user, apps, "Клиенты используют веб приложение для управления и мониторинга температуры в домах")
+Rel(admin, apps, "Администраторы SmartHome System, управляют пользователями")
+Rel(apps, SmartHomeSystem, "Отправка запросов, управление устройствами, мониторинг температуры", "REST")
+Rel(SmartHomeSystem, sensors, "Управление датчиками температуры, сбор данных", "REST")
+
+@enduml

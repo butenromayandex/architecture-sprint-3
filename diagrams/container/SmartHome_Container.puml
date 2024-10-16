@@ -1,0 +1,83 @@
+@startuml
+title SmartHome System Container Diagram
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/butenromayandex/C4/main/C4_Component.puml
+
+!define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
+!define FONTAWESOME https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/font-awesome-5
+!include FONTAWESOME/users.puml
+!include DEVICONS/postgresql.puml
+!include DEVICONS/java.puml
+
+
+Person(user, "Пользователи", "Пользователи системы  SmartHome", $sprite="users")
+Person(admin, "Администраторы", "Администраторы системы  SmartHome", $sprite="users")
+
+System_Boundary(smarthome, "SmartHome System") {
+  Container(heat, "Heating Control Service", "Java + Spring", "Управление теплом", $sprite="java")
+  Container(light, "Lighting Control Service", "Java + Spring", "Управление светом", $sprite="java")
+  Container(video, "Video Control Service", "Java + Spring", "Управление видеотрансляциями", $sprite="java")
+  Container(gate, "Gate Control Service", "Java + Spring", "Управление воротами", $sprite="java")
+
+  Container(telemetry, "Telemetry Processing Service", "Java + Spring", "Постоянно опрашивает датчики, сохраняет информацию в БД и публикует актуальные данные в шину", $sprite="java")
+  Container(schedule, "Schedule Service", "Java + Spring", "Управляет расписанием вкл/откл устройств, публикует команды на включение / отключение устройств", $sprite="java")
+  Container(monitoring, "Monitoring Service", "Java + Spring", "Предоставляет пользователям актуальные данные датчиков / сенсоров", $sprite="java")
+  Container(users, "User Service", "Java + Spring", "Управление пользователями", $sprite="java")
+
+  ContainerQueue(kafka, "Message Broker", "Kafka")
+  Container(gateway, "Api Gateway", "Kusk", "Валидация, аутентификация, авторизация и маршрутизация HTTP запросов")
+  ContainerDb(db, "Database", "Postgres", "Хранение данных", $sprite="postgresql")
+
+}
+
+System_Ext(sensors, "Внешние модули/устройства, датчики. Принимают REST команды")
+System_Ext(apps, "Web apps (spa), разрабатываются на аутсорсе")
+
+
+Rel(user, apps, "Клиенты используют веб приложение для управления и мониторинга температуры в домах")
+Rel(admin, apps, "Администраторы SmartHome System, управляют пользователями")
+
+
+Rel(apps, gateway, "Отправка запросов, управление устройствами, мониторинг температуры")
+
+Rel(gateway, heat, "Управление датчиками температуры, CRUD", "REST")
+Rel(gateway, light, "Управление датчиками освещения, CRUD", "REST")
+Rel(gateway, video, "Управление видеокамерами, CRUD", "REST")
+Rel(gateway, gate, "Управление воротами, CRUD", "REST")
+
+Rel(gateway, schedule, "Управление сценариями, CRUD", "REST")
+Rel(gateway, monitoring, "Мониторинг устройств / модулей, просмотр актуальных данных", "REST")
+Rel(gateway, users, "Управление пользователями, CRUD", "REST")
+
+
+
+Rel(heat, kafka, "Получает команды для управления температурой по сценарию")
+Rel(light, kafka, "Получает команды для управления освещением по сценарию")
+Rel(video, kafka, "Получает команды для управления видеокамерами по сценарию")
+Rel(gate, kafka, "Получает команды для управления воротами по сценарию")
+
+Rel(heat, sensors, "Отправляет команды для управления температурой", "REST")
+Rel(light, sensors, "Отправляет команды для управления освещением", "REST")
+Rel(video, sensors, "Отправляет команды для управления видеокамерами", "REST")
+Rel(gate, sensors, "Отправляет команды для управления воротами", "REST")
+
+Rel(telemetry, sensors, "Сбор данных телеметрии", "REST")
+Rel(telemetry, kafka, "Публикация актуальных данных телеметрии")
+Rel(telemetry, db, "Сохранение данных телеметрии")
+
+'Rel(device, kafka, "Получает телеметрию. На основании данных может вкл/откл устройства исходя из заданных параметров для устройств (Макс. темп. и т.д.)")
+'Rel(device, sensors, "Управление модулями устройств", "REST")
+'Rel(device, db, "Получение / сохранение настроек для устройств")
+
+
+
+Rel(kafka, monitoring, "Получение актуальных данных телеметрии")
+
+Rel(users, db, "Сохранение данных пользователей")
+
+schedule <----> kafka : "Публикация / получение команд на вкл/откл устройств заданных в сценариях"
+schedule <--> db : "Чтение / запись сценариев"
+
+@enduml

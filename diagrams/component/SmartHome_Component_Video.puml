@@ -1,0 +1,38 @@
+@startuml
+title SmartHome Video Component Diagram
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/butenromayandex/C4/main/C4_Component.puml
+
+!define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
+!include DEVICONS/postgresql.puml
+!include DEVICONS/java.puml
+
+System_Boundary(SmartHome, "SmartHome System") {
+  Container(heat, "Video Control Service", "Java + Spring", "Управление видеокамерами", $sprite="java")
+
+  ContainerDb(db, "Database", "Postgres", "Хранение данных", $sprite="postgresql")
+  ContainerQueue(kafka, "Message Broker", "Kafka")
+  Component(Videoway, "API Videoway", "Валидация, аутентификация, авторизация и маршрутизация HTTP запросов")
+}
+
+Container(heat, "Java, Spring") {
+  Component(VideoController, "VideoController", "Обрабатывает HTTP запросы для управления устройством")
+  Component(VideoService, "VideoService", "Бизнес правила")
+  Component(VideoRepository, "VideoRepository", "Логика доступа к данным")
+  Component(VideoConsumer, "VideoConsumer", "Забирает команды на включение / отключение датчиков")
+
+}
+System_Ext(sensors, "Внешние модули/устройства, датчики. Принимают REST команды")
+
+Rel(Videoway, VideoController, "Отправляет запрос на управление устройствами, CRUD", "REST")
+
+VideoController --> VideoService
+VideoService --> VideoRepository
+VideoRepository --> db : "Сохранение данных"
+VideoService --> sensors : "Отправляет команды устройству"
+
+VideoConsumer --> VideoService
+VideoConsumer --> kafka : "Забирает команды, которые нужно применить для устройства"
+@enduml
