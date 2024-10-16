@@ -1,0 +1,38 @@
+@startuml
+title SmartHome Gate Component Diagram
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/butenromayandex/C4/main/C4_Component.puml
+
+!define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
+!include DEVICONS/postgresql.puml
+!include DEVICONS/java.puml
+
+System_Boundary(SmartHome, "SmartHome System") {
+  Container(heat, "Gate Control Service", "Java + Spring", "Управление воротами", $sprite="java")
+
+  ContainerDb(db, "Database", "Postgres", "Хранение данных", $sprite="postgresql")
+  ContainerQueue(kafka, "Message Broker", "Kafka")
+  Component(gateway, "API Gateway", "Валидация, аутентификация, авторизация и маршрутизация HTTP запросов")
+}
+
+Container(heat, "Java, Spring") {
+  Component(GateController, "GateController", "Обрабатывает HTTP запросы для управления устройством")
+  Component(GateService, "GateService", "Бизнес правила")
+  Component(GateRepository, "GateRepository", "Логика доступа к данным")
+  Component(GateConsumer, "GateConsumer", "Забирает команды на включение / отключение датчиков")
+
+}
+System_Ext(sensors, "Внешние модули/устройства, датчики. Принимают REST команды")
+
+Rel(gateway, GateController, "Отправляет запрос на управление устройствами, CRUD", "REST")
+
+GateController --> GateService
+GateService --> GateRepository
+GateRepository --> db : "Сохранение данных"
+GateService --> sensors : "Отправляет команды устройству"
+
+GateConsumer --> GateService
+GateConsumer --> kafka : "Забирает команды, которые нужно применить для устройства"
+@enduml

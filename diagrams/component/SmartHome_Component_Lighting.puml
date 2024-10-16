@@ -1,0 +1,38 @@
+@startuml
+title SmartHome Lighting Component Diagram
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/butenromayandex/C4/main/C4_Component.puml
+
+!define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
+!include DEVICONS/postgresql.puml
+!include DEVICONS/java.puml
+
+System_Boundary(SmartHome, "SmartHome System") {
+  Container(heat, "Lighting Control Service", "Java + Spring", "Управление освещением", $sprite="java")
+
+  ContainerDb(db, "Database", "Postgres", "Хранение данных", $sprite="postgresql")
+  ContainerQueue(kafka, "Message Broker", "Kafka")
+  Component(gateway, "API Gateway", "Валидация, аутентификация, авторизация и маршрутизация HTTP запросов")
+}
+
+Container(heat, "Java, Spring") {
+  Component(LightingController, "LightingController", "Обрабатывает HTTP запросы для управления устройством")
+  Component(LightingService, "LightingService", "Бизнес правила")
+  Component(LightingRepository, "LightingRepository", "Логика доступа к данным")
+  Component(LightingConsumer, "LightingConsumer", "Забирает команды на включение / отключение датчиков")
+
+}
+System_Ext(sensors, "Внешние модули/устройства, датчики. Принимают REST команды")
+
+Rel(gateway, LightingController, "Отправляет запрос на управление устройствами, CRUD", "REST")
+
+LightingController --> LightingService
+LightingService --> LightingRepository
+LightingRepository --> db : "Сохранение данных"
+LightingService --> sensors : "Отправляет команды устройству"
+
+LightingConsumer --> LightingService
+LightingConsumer --> kafka : "Забирает команды, которые нужно применить для устройства"
+@enduml

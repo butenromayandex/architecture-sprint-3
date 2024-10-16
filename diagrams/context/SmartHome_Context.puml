@@ -14,13 +14,13 @@ top to bottom direction
 Person(user, "Пользователи", "Пользователи системы  SmartHome", $sprite="users")
 Person(admin, "Администраторы", "Администраторы системы  SmartHome", $sprite="users")
 
-System(SmartHomeSystem, "SmartHome System", "Управление отоплением в домах пользователей, мониторинг текущей температуры", $sprite="java")
+System(SmartHomeSystem, "SmartHome System", "Управление отоплением в домах пользователей, мониторинг температуры, поддержание заданной температуры", $sprite="java")
 System_Ext(sensors, "Внешние модули/устройства")
+System_Ext(apps, "Web apps (spa), разрабатываются на аутсорсе")
 
-Rel(user, SmartHomeSystem, "Управление температурой")
-Rel(user, SmartHomeSystem, "Просмотр текущей температуры в доме")
-Rel(admin, SmartHomeSystem, "Управление пользователями")
-Rel(SmartHomeSystem, sensors, "Управление датчиками")
-Rel(SmartHomeSystem, sensors, "Мониторинг температуры")
+Rel(user, apps, "Клиенты используют веб приложение для управления и мониторинга температуры в домах")
+Rel(admin, apps, "Администраторы SmartHome System, управляют пользователями")
+Rel(apps, SmartHomeSystem, "Отправка запросов, управление устройствами, мониторинг температуры", "REST")
+Rel(SmartHomeSystem, sensors, "Управление датчиками температуры, сбор данных", "REST")
 
 @enduml

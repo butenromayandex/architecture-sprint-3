@@ -1,0 +1,38 @@
+@startuml
+title SmartHome Heating Component Diagram
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/butenromayandex/C4/main/C4_Component.puml
+
+!define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
+!include DEVICONS/postgresql.puml
+!include DEVICONS/java.puml
+
+System_Boundary(SmartHome, "SmartHome System") {
+  Container(heat, "Heating Control Service", "Java + Spring", "Управление теплом", $sprite="java")
+
+  ContainerDb(db, "Database", "Postgres", "Хранение данных", $sprite="postgresql")
+  ContainerQueue(kafka, "Message Broker", "Kafka")
+  Component(gateway, "API Gateway", "Валидация, аутентификация, авторизация и маршрутизация HTTP запросов")
+}
+
+Container(heat, "Java, Spring") {
+  Component(HeatingController, "HeatingController", "Обрабатывает HTTP запросы для управления устройством")
+  Component(HeatingService, "HeatingService", "Бизнес правила")
+  Component(HeatingRepository, "HeatingRepository", "Логика доступа к данным")
+  Component(HeatingConsumer, "HeatingConsumer", "Забирает команды на включение / отключение датчиков")
+
+}
+System_Ext(sensors, "Внешние модули/устройства, датчики. Принимают REST команды")
+
+Rel(gateway, HeatingController, "Отправляет запрос на управление устройствами, CRUD", "REST")
+
+HeatingController --> HeatingService
+HeatingService --> HeatingRepository
+HeatingRepository --> db : "Сохранение данных"
+HeatingService --> sensors : "Отправляет команды устройству"
+
+HeatingConsumer --> HeatingService
+HeatingConsumer --> kafka : "Забирает команды, которые нужно применить для устройства"
+@enduml
